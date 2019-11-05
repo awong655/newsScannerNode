@@ -3,6 +3,7 @@ var url = require('url');
 var dateModule = require('./firstModule');
 var ScanModule = require('./ScanModule');
 var scheduler = require('node-schedule');
+var db = require('./dbModule');
 
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/html'});
@@ -14,8 +15,10 @@ http.createServer(function (req, res) {
 var rule = new scheduler.RecurrenceRule();
 rule.second = [0,15,30,45];
 rule.minute = [0, new scheduler.Range(0,59)];
-rule.hour = 23;
+rule.hour = 21;
+console.log("test");
 
 var scheduleResult = scheduler.scheduleJob(rule,function(){
-  ScanModule.executeScan();
+  db.db_connect("mongodb://localhost:27017/", "newsScanDB", ScanModule.executeScan, ["china","mcdonald"]); // pass list of words here
+  //ScanModule.executeScan(db_init.db, db_init.dbo);
 });
