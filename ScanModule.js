@@ -5,28 +5,35 @@ var request = require('request');
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
 var db = require('./dbModule');
+var dateModule = require('./dateModule');
+var scp = require('./ScanProcessModule');
 
 // event handler
-exports.executeScan = function(wordList){ // args[] = list of words to search for
-  var today = new Date();
-  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-  console.log("Requesting page at time " + time);
+exports.executeScan = function(result, args){ // args[] = list of words to search for  
+  console.log("Requesting page at time " + dateModule.singleScanTime());
+ 
+  let wordList = args.wordList;
+  let url = args.url;
 
-  request('https://www.bnnbloomberg.ca/', function (error, response, body) {
+  request(url, function (error, response, body) {
     console.log('error:', error); // Print the error if one occurred
     console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-    processReq(body, wordList);
+    handleScan(url, body, wordList);
   });
 };
 
-let processReq = function(body, wordList){
-  let obj = scanDoc(body, wordList);
-  db.db_insert(obj, "newsCache");
-  db.db_query({}, "newsCache");
+let handleScan = function(url, body, wordList){
+  let obj = scanDoc(url, body, wordList);  
+  let procInitStatus = scp.initProcess(url, obj, wordList);
+    
+ 
 }
 
-let scanDoc = function(body, wordList){
-  let obj = {};  
+let scanDoc = function(url, body, wordList){
+  let obj = {
+    "url" : url,
+    "date" : dateModule.singleScanTime()
+  };  
   const dom = new JSDOM(body);
   console.log(dom.window.document.getElementsByTagName("a").length); 
   var listOfLinks = dom.window.document.getElementsByTagName("a");
@@ -42,7 +49,6 @@ let scanDoc = function(body, wordList){
           if(obj[wordList[j]] === undefined)
             obj[wordList[j]] = []; 
           obj[wordList[j]].push(link);
-          //obj[matchCount] = link;
         }
       }
     }        
@@ -50,3 +56,4 @@ let scanDoc = function(body, wordList){
   console.log("done one scan.");
   return obj;
 }
+

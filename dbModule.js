@@ -8,25 +8,25 @@ exports.db_connect = function(url, db_name, callback, args){
         if (err) throw err;
         db = database;
         dbo = db.db(db_name);
-        console.log("Database connected!");
-        typeof callback == 'function' && callback(args);
+        console.log("Database connected!");        
+        typeof callback == 'function' && callback(db, args);
       });
 }
 
 // insert then optionally callback. Good use of callback is to insert then close.
-exports.db_insert = function(object, collection, callback){    
-    dbo.collection(collection).insertOne(object, function(err, res){
+exports.db_insert = function(object, collection, callback, args){    
+    dbo.collection(collection).insertOne(object, function(err, result){
         if (err) throw err;
-        console.log("1 document inserted");
-        typeof callback == 'function' && callback();
+        console.log("document inserted");
+        typeof callback == 'function' && callback(result, args);
     });    
 }
 
-exports.db_query = function(object, collection, callback){
+exports.db_query = function(object, collection, callback, args){
     dbo.collection(collection).find(object).toArray(function(err,result){
         if (err) throw err;
         console.log(result);
-        typeof callback == 'function' && callback();
+        typeof callback == 'function' && callback(result, args);        
     });
 }
 

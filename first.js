@@ -1,6 +1,6 @@
 var http = require('http');
 var url = require('url');
-var dateModule = require('./firstModule');
+var dateModule = require('./dateModule');
 var ScanModule = require('./ScanModule');
 var scheduler = require('node-schedule');
 var db = require('./dbModule');
@@ -19,6 +19,11 @@ rule.hour = 21;
 console.log("test");
 
 var scheduleResult = scheduler.scheduleJob(rule,function(){
-  db.db_connect("mongodb://localhost:27017/", "newsScanDB", ScanModule.executeScan, ["china","mcdonald"]); // pass list of words here
+  db.db_connect("mongodb://localhost:27017/", "newsScanDB", ScanModule.executeScan, 
+  {
+    "url" : "https://www.bnnbloomberg.ca/", // pass URL here
+    "wordList" : ["china","mcdonald"] // pass list of words here
+  }); 
+
   //ScanModule.executeScan(db_init.db, db_init.dbo);
 });
