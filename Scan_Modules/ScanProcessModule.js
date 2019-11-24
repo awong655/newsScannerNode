@@ -1,5 +1,5 @@
-var db = require('./dbModule');
-var dateModule = require('./dateModule');
+var db = require('../DB_Modules/dbModule');
+var dateModule = require('../Util_Modules/dateModule');
 
 exports.initProcess = function(url, obj, wordList){
     return new Promise((resolve, reject) =>{

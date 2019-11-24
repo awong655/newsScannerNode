@@ -2,10 +2,42 @@
 var jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 var request = require('request');
-var events = require('events');
-var db = require('./dbModule');
-var dateModule = require('./dateModule');
+var db = require('../DB_Modules/dbModule');
+var dateModule = require('../Util_Modules/dateModule');
 var scp = require('./ScanProcessModule');
+var scheduler = require('node-schedule');
+var scm = require('../Scheduler_Modules/Scheduler_Module')
+
+exports.initializeScan = function(){
+  // set up scheduling rule
+  let rule = scm.createScheduleRule([0,15,30,45], [0, new scheduler.Range(0,59)], 11);
+
+  // initialize DB and strings to query by, initialize scheduler
+  db.db_connect("mongodb://localhost:27017/", "newsScanDB", initScan, rule);
+}
+
+// Query DB for strings to scan for and URLS to scan for. Then initialize the scan
+var initScan = function(rule){
+  return new Promise((resolve, reject) => {
+    try{
+      db.db_query({"Type": { "$in": ["url","keyword"]}}, "ScanStrings", resolve, true);
+    }catch(err){
+      reject(err);
+    }
+    
+  }).then(function(result){
+    let wordList = null;
+    let urlList = null;
+    result.map(function(item){
+      if(item.Type === "keyword")
+        wordList = item.KeyList;
+      else if(item.Type === "url")
+        urlList = item.UrlList;
+    });   
+    // execute the job at the scheduled time
+    scm.startScheduler(wordList, urlList, rule);     
+  });
+}
 
 // event handler
 exports.executeScan = function(url, wordList){ // args[] = list of words to search for  
@@ -19,9 +51,7 @@ exports.executeScan = function(url, wordList){ // args[] = list of words to sear
 
 let handleScan = function(url, body, wordList){
   let obj = scanDoc(url, body, wordList);  
-  let procInitStatus = scp.initProcess(url, obj, wordList);
-    
- 
+  let procInitStatus = scp.initProcess(url, obj, wordList);     
 }
 
 let scanDoc = function(url, body, wordList){
