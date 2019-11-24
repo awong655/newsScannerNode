@@ -30,6 +30,30 @@ exports.db_query = function(object, collection, callback, args){
     });
 }
 
+exports.db_query_project = function(object, projection, collection, callback, args){
+    dbo.collection(collection).find(object, projection).toArray(function(err,result){
+        if (err) throw err;
+        console.log(result);
+        typeof callback == 'function' && callback(result, args);        
+    });
+}
+
+exports.db_findOne = function(object, projection, collection, callback, args){
+    dbo.collection(collection).findOne(object, {"projection": projection}, function(err,result){
+        if (err) throw err;
+        console.log(result);
+        typeof callback == 'function' && callback(result, args);        
+    });    
+}
+
+exports.db_update = function(object, newVal, collection, callback, args){
+    dbo.collection(collection).updateOne(object, newVal, function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        typeof callback == 'function' && callback(result, args); 
+    });
+}
+
 // close db connection
 exports.db_close = function(){
     database.close();

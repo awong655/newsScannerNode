@@ -3,17 +3,17 @@ var dateModule = require('./dateModule');
 
 exports.initProcess = function(url, obj, wordList){
     return new Promise((resolve, reject) =>{
+        // insert the scan result into the db for record
         try{
-            console.log("1");
             db.db_insert(obj, "newsCache", resolve, true);
         }catch(err){
             reject(err);
         }    
     }).then(function(result){
         return new Promise((resolve, reject) => {
+            // gets the previously largest result which is stored in the report table
             try{
-                console.log("2");
-                db.db_query({"url": url, "date": dateModule.singleScanTime()}, "Report",  resolve );
+                db.db_query({"url": url, "day_requested": dateModule.singleScanDay()}, "Report",  resolve );
             }catch(err){
                 reject(err);
             }
@@ -22,8 +22,13 @@ exports.initProcess = function(url, obj, wordList){
     }).then(function(result){
         return new Promise((resolve, reject) => {
             try{
-                console.log("3");
-                initResultTable(result, {"obj": obj, "wordList": wordList, "index":0}, resolve)
+                //initResultTable(result, {"obj": obj, "wordList": wordList, "index":0}, resolve)
+                if(!result.length){
+                    db.db_insert(obj, "Report", resolve, true);        
+                }  
+                else{
+                    resolve(true);
+                }
             }catch(err){
                 reject(err);
             }
@@ -31,39 +36,45 @@ exports.initProcess = function(url, obj, wordList){
     }).then(function(result){
         return new Promise((resolve, reject) => {
             try{
-                console.log("4");
-                processResult(result, {"obj": obj, "wordList": wordList, "index":0}, resolve)
+                processResult(result, {"obj": obj, "wordList": wordList}, resolve)
             }catch(err){
                 reject(err);
             }
         });
     });    
 }
-
-let initResultTable = function(result, args, resolve){
-    // if empty, populate result.   
-    let obj = args.obj;
-    if(!result.length){
-        db.db_insert(obj, "Report", resolve, true);        
-    }  
-    else{
-        resolve(true);
-    }
-  }
   
+  // for each keyword, check if the length of the most recently inserted object is longer than the length of the longest record in the Report collection
   let processResult = function(result, args, resolve){
     let obj = args.obj;
     let wordList = args.wordList;
-    let index = args.index;
-  
-    if(index >= wordList.length)
-      resolve(true);
-  
-    if(result.insertedId in result)
-      result = obj;   
-  
-    db.db_query({}[wordList[index]] = {}, "Report", processResult, [obj, wordList, index+1]);   
-  
+
+    //if(result.insertedId in result)
+      //result = obj;   
+    for(let index = 0; index < wordList.length; index++){
+        let res = new Promise((resolve, reject) => {            
+            try{
+                let currentObjKey = {"_id" : 0}
+                currentObjKey[wordList[index]] = 1;
+                db.db_findOne({"day_requested": dateModule.singleScanDay()},                     
+                    currentObjKey
+                    , "Report", resolve);  
+            }catch(err){
+                reject(err);
+            }
+        }).then(function(result){
+            if(result[wordList[index]].length < obj[wordList[index]].length){
+                let updateObj = {};
+                updateObj[wordList[index]] = obj[wordList[index]]
+                db.db_update({"day_requested": dateModule.singleScanDay()},
+                    {"$set":                         
+                        updateObj                    
+                    },
+                    "Report"
+                )
+            }
+        });
+    }  
     // do some kind of comparison to the scanned obj here. Update if the list is longer
     //if(result.length )
   
