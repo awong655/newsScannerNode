@@ -10,14 +10,14 @@ var scm = require('../Scheduler_Modules/Scheduler_Module')
 
 exports.initializeScan = function(){
   // set up scheduling rule
-  let rule = scm.createScheduleRule([0,15,30,45], [0, new scheduler.Range(0,59)], 11);
+  let rule = scm.createScheduleRule([0,15,30,45], [0, new scheduler.Range(0,45)], 9);
 
   // initialize DB and strings to query by, initialize scheduler
   db.db_connect("mongodb://localhost:27017/", "newsScanDB", initScan, rule);
 }
 
 // Query DB for strings to scan for and URLS to scan for. Then initialize the scan
-var initScan = function(rule){
+var initScan = function(connectionResult, rule){
   return new Promise((resolve, reject) => {
     try{
       db.db_query({"Type": { "$in": ["url","keyword"]}}, "ScanStrings", resolve, true);
@@ -35,7 +35,7 @@ var initScan = function(rule){
         urlList = item.UrlList;
     });   
     // execute the job at the scheduled time
-    scm.startScheduler(wordList, urlList, rule);     
+    scm.startScanScheduler(wordList, urlList, rule);     
   });
 }
 

@@ -14,7 +14,7 @@ exports.createScheduleRule = function(seconds, minutes, hours){
 // param: wordList = list of words to search for
 // param: urlList = list of URLs to search for
 // param: rule = determines when scheduler will run
-exports.startScheduler = function(wordList, urlList, rule){  
+exports.startScanScheduler = function(wordList, urlList, rule){  
     this.wordList = wordList;
     this.urlList = urlList;
 
@@ -27,5 +27,11 @@ exports.startScheduler = function(wordList, urlList, rule){
             scan_module.executeScan(url, wordList);  
         })
       }()      
+    })    
+}
+
+exports.startEmailScheduler = function(rule, callback){
+    scheduler.scheduleJob(rule, function(){
+        callback();
     })    
 }

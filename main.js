@@ -2,8 +2,8 @@ var http = require('http');
 var url = require('url');
 var dateModule = require('./Util_Modules/dateModule');
 var ScanModule = require('./Scan_Modules/ScanModule');
-var scheduler = require('node-schedule');
-var db = require('./DB_Modules/dbModule');
+var EmailModule = require('./Report_Modules/Email_Module')
+var db = require('./DB_Modules/dbModule') // TODO remove this
 
 // server listener
 http.createServer(function (req, res) {
@@ -13,5 +13,8 @@ http.createServer(function (req, res) {
   res.end();
 }).listen(8080);
 
+//db.db_connect("mongodb://localhost:27017/", "newsScanDB");
 ScanModule.initializeScan();
+EmailModule.scheduleEmail();
+
 
